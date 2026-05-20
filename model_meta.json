@@ -1,0 +1,18 @@
+{
+  "model_name": "Decision Tree Regressor",
+  "features": [
+    "mag",
+    "depth",
+    "latitude",
+    "longitude",
+    "nst",
+    "gap",
+    "rms"
+  ],
+  "scaled_input": false,
+  "metrics": {
+    "RMSE": 42.84225274786502,
+    "MAE": 10.956367304440251,
+    "R2": 0.8588447066420106
+  }
+}
