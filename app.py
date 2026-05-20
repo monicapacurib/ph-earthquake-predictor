@@ -5,7 +5,7 @@ import numpy as np
 import joblib
 import json
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+import plotly.express as px
 
 # ── Page config ──────────────────────────────────────────
 st.set_page_config(
@@ -52,34 +52,26 @@ st.markdown("""
 col_input, col_result = st.columns([1, 1], gap="large")
 
 with col_input:
-    # Wrapping inputs in a form prevents the app from reloading on every keystroke!
     with st.form("earthquake_form"):
         st.subheader("📥 Earthquake Input Parameters")
         st.caption("Type the exact values or use the arrows to adjust.")
 
-        # Row 1: Mag & Depth side-by-side
         row1_col1, row1_col2 = st.columns(2)
         with row1_col1:
             mag = st.number_input("Magnitude (Richter)",
-                                  min_value=0.0, max_value=9.5, value=7.2, step=0.1, format="%.1f",
-                                  help="Moment magnitude of the earthquake")
+                                  min_value=0.0, max_value=9.5, value=7.2, step=0.1, format="%.1f")
         with row1_col2:
             depth = st.number_input("Depth (km)",
-                                    min_value=0.0, max_value=700.0, value=12.0, step=1.0, format="%.1f",
-                                    help="Focal depth of the earthquake")
+                                    min_value=0.0, max_value=700.0, value=12.0, step=1.0, format="%.1f")
 
-        # Row 2: Lat & Lon side-by-side
         row2_col1, row2_col2 = st.columns(2)
         with row2_col1:
             latitude = st.number_input("Latitude (°N)",
-                                       min_value=4.5, max_value=21.5, value=9.80, step=0.01, format="%.4f",
-                                       help="Geographic latitude (Philippines: 4.5°N – 21.5°N)")
+                                       min_value=4.5, max_value=21.5, value=9.80, step=0.01, format="%.4f")
         with row2_col2:
             longitude = st.number_input("Longitude (°E)",
-                                        min_value=116.0, max_value=127.5, value=124.00, step=0.01, format="%.4f",
-                                        help="Geographic longitude (Philippines: 116°E – 127.5°E)")
+                                        min_value=116.0, max_value=127.5, value=124.00, step=0.01, format="%.4f")
 
-        # Optional features
         extra_inputs = {}
         optional_cols = [f for f in meta["features"] if f not in ["mag","depth","latitude","longitude"]]
         if optional_cols:
@@ -87,7 +79,6 @@ with col_input:
                 for col in optional_cols:
                     extra_inputs[col] = st.number_input(col, value=0.0, format="%.4f")
 
-        # The submit button for the form
         predict_btn = st.form_submit_button("🔮 Predict Significance Score",
                                             use_container_width=True, type="primary")
 
@@ -145,6 +136,28 @@ with col_result:
         ax_g.legend(loc='upper right', fontsize=8)
         st.pyplot(fig_g, use_container_width=True)
 
+        # NEW: Bulletproof Plotly Map Integration
+        st.markdown("#### 📍 Epicenter Location")
+        map_df = pd.DataFrame({"latitude": [latitude], "longitude": [longitude]})
+
+        # Create map using OpenStreetMap tiles (no API key needed)
+        fig_map = px.scatter_mapbox(
+            map_df,
+            lat="latitude",
+            lon="longitude",
+            zoom=5,
+            hover_name=["Epicenter"]
+        )
+        # Style the marker
+        fig_map.update_traces(marker=dict(size=16, color='red'))
+        # Set map layout
+        fig_map.update_layout(
+            mapbox_style="open-street-map",
+            margin={"r":0, "t":0, "l":0, "b":0},
+            height=350
+        )
+        st.plotly_chart(fig_map, use_container_width=True)
+
         # Summary table
         st.markdown("#### Input Summary")
         summary_data = {
@@ -166,13 +179,9 @@ m1.metric("Best Model",  meta["model_name"].split()[0])
 m2.metric("R² Score",    f"{meta['metrics']['R2']:.4f}")
 m3.metric("RMSE",        f"{meta['metrics']['RMSE']:.2f}")
 m4.metric("MAE",         f"{meta['metrics']['MAE']:.2f}")
+'''
 
-# ── Footer ───────────────────────────────────────────────
-st.markdown("""
-<hr>
-<p style='text-align:center; color:gray; font-size:12px;'>
-    CPELX130 — CPE Elective 1: Data Science &nbsp;|&nbsp; 3rd Term AY 2025–2026<br>
-    Barroga · Gonzales · Nanlavis · Pacurib · Setarios &nbsp;|&nbsp;
-    National University — College of Engineering
-</p>
-""", unsafe_allow_html=True)
+with open("app.py", "w") as f:
+    f.write(app_code)
+
+print("✅ app.py written successfully with robust Plotly Map!")
